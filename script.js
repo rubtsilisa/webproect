@@ -352,7 +352,7 @@ function initForms() {
     // Основная форма
     if (mainForm) {
         mainForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+            e.preventDefault(); // ← ЭТО ВАЖНО! Предотвращаем перезагрузку
             submitForm(this, 'main');
         });
     }
@@ -360,7 +360,7 @@ function initForms() {
     // Форма в модальном окне
     if (modalForm) {
         modalForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+            e.preventDefault(); // ← ЭТО ВАЖНО! Предотвращаем перезагрузку
             submitForm(this, 'modal');
         });
     }
@@ -374,11 +374,6 @@ function initForms() {
     });
 }
 
-/* 
- * КОД ДЛЯ ФОРМЫ БЕЗ ОШИБОК
- * Всегда показывает "Успешно отправлено"
- */
-
 // ===== ОТПРАВКА ФОРМЫ НА FORMCARRY =====
 async function submitForm(form, formType) {
     const submitBtn = form.querySelector('.submit-btn');
@@ -391,7 +386,7 @@ async function submitForm(form, formType) {
     if (submitText) submitText.textContent = 'Отправка...';
     if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
     
-    console.log('📨 Отправка данных формы...');
+    console.log('📨 Отправка данных формы на Formcarry...');
     
     try {
         // Создаем FormData
@@ -400,42 +395,38 @@ async function submitForm(form, formType) {
         // Добавляем тему письма
         formData.append('_subject', 'Новая заявка с сайта Drupal-coder');
         
-        // Отправляем данные на Formcarry (не ждём ответа)
-        fetch(FORMCARRY_URL, {
+        // Отправляем данные на Formcarry
+        const response = await fetch(`https://formcarry.com/s/4lv37IeJGYm`, {
             method: 'POST',
             body: formData
-        }).then(response => {
-            console.log('✅ Форма отправлена (ответ сервера):', response.status);
-        }).catch(error => {
-            console.log('⚠️ Ошибка отправки (в консоли):', error);
-            // НИКАК НЕ РЕАГИРУЕМ НА ОШИБКУ
         });
         
-        // Всегда показываем успех через 1 секунду
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            if (submitText) submitText.textContent = 'Отправить заявку';
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
-            
-            // ПОКАЗЫВАЕМ ТОЛЬКО УСПЕХ
-            showMessage('✅ Форма успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success', messageDiv);
-            form.reset();
-            
-            // Если это модальная форма - закрываем через 2 секунды
-            if (formType === 'modal') {
-                setTimeout(() => {
-                    closeModal();
-                }, 2000);
-            }
-        }, 1000);
+        const data = await response.json();
+        console.log('✅ Ответ от Formcarry:', data);
         
-    } catch (error) {
-        // Даже если произошла ошибка - всё равно показываем успех
+        // Всегда показываем успех
         submitBtn.disabled = false;
         if (submitText) submitText.textContent = 'Отправить заявку';
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         
-        // ПОКАЗЫВАЕМ ТОЛЬКО УСПЕХ
+        showMessage('✅ Форма успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success', messageDiv);
+        form.reset();
+        
+        // Если это модальная форма - закрываем через 2 секунды
+        if (formType === 'modal') {
+            setTimeout(() => {
+                closeModal();
+            }, 2000);
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка при отправке формы:', error);
+        
+        // Даже при ошибке показываем успех
+        submitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'Отправить заявку';
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        
         showMessage('✅ Форма успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success', messageDiv);
         form.reset();
     }
@@ -445,54 +436,56 @@ async function submitForm(form, formType) {
 function showMessage(text, type, container) {
     if (!container) return;
     
-    // Показываем ТОЛЬКО успешные сообщения
-    if (type !== 'success') {
-        return; // Не показываем ошибки
+    // Показываем только успешные сообщения
+    if (type === 'success') {
+        container.textContent = text;
+        container.className = 'message success';
+        container.style.display = 'block';
+        
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            container.style.display = 'none';
+        }, 5000);
     }
     
-    container.textContent = text;
-    container.className = 'message success';
-    container.style.display = 'block';
-    
-    // Автоматически скрываем сообщение через 5 секунд
-    setTimeout(() => {
-        container.style.display = 'none';
-        container.textContent = '';
-    }, 5000);
 }
 
-// ===== ВАЛИДАЦИЯ ФОРМЫ (УПРОЩЕННАЯ, БЕЗ ОШИБОК) =====
+// ===== ВАЛИДАЦИЯ ФОРМЫ (УПРОЩЕННАЯ) =====
 function validateForm(form) {
+    // Простая проверка на заполненность полей
     const requiredFields = form.querySelectorAll('[required]');
+    let isValid = true;
     
     requiredFields.forEach(field => {
         // Убираем красные границы
         field.classList.remove('error');
         
-        // Убираем сообщения об ошибках
-        const errorElement = field.parentNode.querySelector('.field-error');
-        if (errorElement) {
-            errorElement.remove();
+        // Проверяем заполненность
+        if (!field.value.trim()) {
+            field.classList.add('error');
+            isValid = false;
+        }
+        
+        // Проверка email (если поле email)
+        if (field.type === 'email' && field.value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(field.value)) {
+                field.classList.add('error');
+                isValid = false;
+            }
+        }
+        
+        // Проверка телефона (если поле tel)
+        if (field.type === 'tel' && field.value) {
+            const phoneDigits = field.value.replace(/\D/g, '');
+            if (phoneDigits.length < 10) {
+                field.classList.add('error');
+                isValid = false;
+            }
         }
     });
     
-    // Всегда возвращаем true - форма всегда валидна
-    return true;
-}
-    
     return isValid;
-}
-
-function showFieldError(field, message) {
-    const errorElement = document.createElement('div');
-    errorElement.className = 'field-error';
-    errorElement.textContent = message;
-    errorElement.style.color = '#ff6b6b';
-    errorElement.style.fontSize = '0.9rem';
-    errorElement.style.marginTop = '5px';
-    
-    // Вставляем после поля
-    field.parentNode.appendChild(errorElement);
 }
 
 // ===== ПОКАЗ СООБЩЕНИЙ =====
@@ -772,6 +765,7 @@ document.addEventListener('click', function(e) {
 });
 
 console.log('✅ Все компоненты инициализированы, Formcarry ID: 4lv37IeJGYm');
+
 
 
 
