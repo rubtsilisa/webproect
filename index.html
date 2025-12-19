@@ -18,17 +18,6 @@
         .raf-animating {
             will-change: transform, opacity;
         }
-        
-        /* Стили для видео-фона если видео не загрузится */
-        .video-fallback {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a2980, #26d0ce);
-            z-index: -2;
-        }
     </style>
 </head>
 <body>
@@ -81,33 +70,25 @@
     </nav>
     
     <!-- Шапка сайта с видео -->
-<header class="header" id="header">
-    <!-- Видео-фон -->
-    <div class="video-container">
-        <!-- ОСНОВНОЕ ВИДЕО -->
-        <video autoplay muted loop playsinline class="video-background" id="headerVideo">
-            <source src="video.mp4" type="video/mp4">
-            <!-- ЗАПАСНОЙ ВАРИАНТ если MP4 не работает -->
-            <source src="video.webm" type="video/webm">
-            <!-- ЕСЛИ ВИДЕО ВООБЩЕ НЕ РАБОТАЕТ - показываем этот текст -->
-            Ваш браузер не поддерживает видео. Или файл video.mp4 отсутствует.
-        </video>
-        
-        <!-- ТЕМНЫЙ НАЛОЖЕНИЕ (чтобы текст был читаемым) -->
-        <div class="video-overlay"></div>
-        
-        <!-- ЗАПАСНОЙ ФОН если видео не загрузилось -->
-        <div class="video-fallback"></div>
-    </div>
-    
-    <div class="container">
-        <div class="hero">
-            <h1>13 лет совершенствуем компетенции в Drupal поддержке!</h1>
-            <p>Разрабатываем и оптимизируем модули, расширяем функциональность сайтов, обновляем дизайн</p>
-            <button class="cta-button" id="heroContactBtn">Получить консультацию</button>
+    <header class="header" id="header">
+        <!-- Видео-фон -->
+        <div class="video-container">
+            <video autoplay muted loop playsinline class="video-background" id="headerVideo">
+                <source src="video.mp4" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+            <div class="video-overlay"></div>
+            <div class="video-fallback"></div>
         </div>
-    </div>
-</header>
+        
+        <div class="container">
+            <div class="hero">
+                <h1>13 лет совершенствуем компетенции в Drupal поддержке!</h1>
+                <p>Разрабатываем и оптимизируем модули, расширяем функциональность сайтов, обновляем дизайн</p>
+                <button class="cta-button" id="heroContactBtn">Получить консультацию</button>
+            </div>
+        </div>
+    </header>
     
     <!-- Секция услуг -->
     <section class="section" id="services">
@@ -285,4 +266,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
