@@ -457,9 +457,17 @@ function validateForm(form) {
     requiredFields.forEach(field => {
         field.classList.remove('error');
         
+        // Убираем предыдущие сообщения об ошибках
+        const errorElement = field.parentNode.querySelector('.field-error');
+        if (errorElement) {
+            errorElement.remove();
+        }
+        
+        // Проверка на заполненность
         if (!field.value.trim()) {
             field.classList.add('error');
             isValid = false;
+            showFieldError(field, 'Это поле обязательно для заполнения');
         }
         
         // Валидация email
@@ -468,11 +476,43 @@ function validateForm(form) {
             if (!emailRegex.test(field.value)) {
                 field.classList.add('error');
                 isValid = false;
+                showFieldError(field, 'Введите корректный email адрес');
+            }
+        }
+        
+        // Валидация телефона - УПРОЩЕННАЯ ВЕРСИЯ
+        if (field.type === 'tel' && field.value) {
+            // Удаляем все НЕ цифры
+            const phoneDigits = field.value.replace(/\D/g, '');
+            
+            // Проверяем минимальную длину (обычно 10-11 цифр для России)
+            if (phoneDigits.length < 10) {
+                field.classList.add('error');
+                isValid = false;
+                showFieldError(field, 'Введите корректный номер телефона (минимум 10 цифр)');
+            }
+            
+            // Дополнительно: если номер начинается с 8, меняем на +7
+            if (phoneDigits.startsWith('8') && phoneDigits.length === 11) {
+                // Это российский номер, можно оставить как есть
+                // Или можно нормализовать: field.value = '+7' + phoneDigits.substring(1);
             }
         }
     });
     
     return isValid;
+}
+
+function showFieldError(field, message) {
+    const errorElement = document.createElement('div');
+    errorElement.className = 'field-error';
+    errorElement.textContent = message;
+    errorElement.style.color = '#ff6b6b';
+    errorElement.style.fontSize = '0.9rem';
+    errorElement.style.marginTop = '5px';
+    
+    // Вставляем после поля
+    field.parentNode.appendChild(errorElement);
 }
 
 // ===== ПОКАЗ СООБЩЕНИЙ =====
@@ -752,3 +792,4 @@ document.addEventListener('click', function(e) {
 });
 
 console.log('✅ Все компоненты инициализированы, Formcarry ID: 4lv37IeJGYm');
+
