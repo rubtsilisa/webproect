@@ -7,7 +7,7 @@
  * 2. Слайдер кейсов
  * 3. Слайдер отзывов
  * 4. FAQ аккордеон
- * 5. Формы с AJAX отправкой
+ * 5. Формы с AJAX отправкой НА РЕАЛЬНЫЙ SERVER
  * 6. Модальное окно с RAF анимацией
  * 7. Анимации скролла
  * 8. LocalStorage для форм
@@ -15,11 +15,12 @@
  */
 
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ =====
-const API_URL = 'https://formspree.io/f/YOUR_FORM_ID'; // Замени на свой ID с Formspree
+const API_URL = 'https://formspree.io/f/xykgkkpa'; // ВАШ РЕАЛЬНЫЙ ID ФОРМЫ
 
 // ===== ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Drupal-coder проект загружен');
+    console.log('📧 Отправка формы на Formspree ID: xykgkkpa');
     
     // Инициализация всех компонентов
     initNavigation();
@@ -431,7 +432,7 @@ function initForms() {
     });
 }
 
-// ===== ОТПРАВКА ФОРМЫ =====
+// ===== ОТПРАВКА ФОРМЫ (РЕАЛЬНАЯ ОТПРАВКА ЧЕРЕЗ FETCH) =====
 function submitForm(form, formType) {
     const submitBtn = form.querySelector('.submit-btn');
     const submitText = form.querySelector('#submitText');
@@ -453,44 +454,40 @@ function submitForm(form, formType) {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
     
-    console.log('📨 Отправка данных формы:', data);
+    console.log('📨 Отправка данных формы на Formspree:', data);
+    console.log('🌐 URL для отправки:', API_URL);
     
-    // В РЕАЛЬНОМ ПРОЕКТЕ РАСКОММЕНТИРУЙТЕ ЭТОТ КОД:
-    /*
+    // РЕАЛЬНАЯ ОТПРАВКА ЧЕРЕЗ FETCH
     fetch(API_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+            name: data.name || '',
+            phone: data.phone || '',
+            email: data.email || '',
+            service: data.service || '',
+            message: data.message || data.comment || '',
+            plan: data.plan || '',
+            _subject: 'Новая заявка с сайта Drupal-coder'
+        })
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`Ошибка сети: ${response.status}`);
+            throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
         }
         return response.json();
     })
-    .then(data => {
+    .then(responseData => {
+        console.log('✅ Форма успешно отправлена:', responseData);
         handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
     })
     .catch(error => {
         console.error('❌ Ошибка при отправке формы:', error);
         handleFormError(error, submitBtn, submitText, loadingSpinner, messageDiv);
     });
-    */
-    
-    // Имитация отправки (удалите в реальном проекте)
-    setTimeout(() => {
-        // 90% успешной отправки, 10% ошибки для демонстрации
-        const isSuccess = Math.random() > 0.1;
-        
-        if (isSuccess) {
-            handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
-        } else {
-            handleFormError(new Error('Сервер временно недоступен'), submitBtn, submitText, loadingSpinner, messageDiv);
-        }
-    }, 2000);
 }
 
 // ===== ВАЛИДАЦИЯ ФОРМЫ =====
@@ -584,10 +581,14 @@ function handleFormError(error, submitBtn, submitText, loadingSpinner, messageDi
     // Показываем сообщение об ошибке
     let errorMessage = '❌ Ошибка при отправке формы. Пожалуйста, попробуйте еще раз.';
     
-    if (error.message.includes('Сервер временно недоступен')) {
-        errorMessage = '❌ Сервер временно недоступен. Пожалуйста, попробуйте позже или свяжитесь с нами по телефону.';
-    } else if (error.message.includes('network')) {
+    if (error.message.includes('Failed to fetch')) {
         errorMessage = '❌ Проблема с подключением к интернету. Проверьте ваше соединение.';
+    } else if (error.message.includes('404')) {
+        errorMessage = '❌ Неверный адрес для отправки формы. Свяжитесь с администратором.';
+    } else if (error.message.includes('429')) {
+        errorMessage = '❌ Слишком много запросов. Пожалуйста, попробуйте позже.';
+    } else if (error.message.includes('500')) {
+        errorMessage = '❌ Ошибка на сервере. Пожалуйста, попробуйте позже или свяжитесь с нами по телефону.';
     }
     
     showMessage(errorMessage, 'error', messageDiv);
@@ -959,4 +960,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-console.log('✅ Все компоненты инициализированы');
+console.log('✅ Все компоненты инициализированы, Formspree ID: xykgkkpa');
