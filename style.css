@@ -20,6 +20,7 @@ body {
     color: #333;
     background-color: #fff;
     overflow-x: hidden;
+    position: relative; /* Добавлено для правильного позиционирования */
 }
 
 /* Контейнер для центрирования контента */
@@ -33,10 +34,15 @@ body {
 /* Утилитные классы */
 .section {
     padding: 80px 0;
+    position: relative; /* ВАЖНО: создаем новый контекст */
+    z-index: 2; /* ВАЖНО: поднимаем над видео */
+    background: white; /* ВАЖНО: явно задаем фон */
 }
 
 .section-gray {
     background-color: #f8f9fa;
+    position: relative;
+    z-index: 2; /* ВАЖНО: поднимаем над видео */
 }
 
 .section-title {
@@ -92,7 +98,11 @@ body {
     align-items: center;
     justify-content: center;
     color: white;
-    overflow: hidden;
+    overflow: hidden; /* ВАЖНО: обрезаем видео, чтобы не выходило за пределы */
+    
+    /* Создаем новый контекст стекирования */
+    isolation: isolate; /* Современный способ */
+    z-index: 1; /* Старый способ для поддержки */
 }
 
 .video-container {
@@ -101,13 +111,39 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
+    z-index: -1; /* Видео ПОД контентом */
+    overflow: hidden; /* ВАЖНО: не даем видео выйти за пределы */
 }
 
 .video-background {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Темное наложение поверх видео (чтобы текст был виден) */
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* Полупрозрачный черный */
+    z-index: 0;
+}
+
+/* Запасной фон если видео не загрузилось */
+.video-fallback {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a2980, #26d0ce);
+    z-index: -2; /* Под видео */
 }
 
 .hero {
@@ -115,6 +151,8 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 20px;
+    position: relative; /* ВАЖНО */
+    z-index: 3; /* ВАЖНО: поднимаем текст над видео и оверлеем */
 }
 
 .hero h1 {
@@ -122,12 +160,14 @@ body {
     margin-bottom: 20px;
     font-weight: 800;
     line-height: 1.2;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Делаем текст читаемым */
 }
 
 .hero p {
     font-size: 1.2rem;
     margin-bottom: 30px;
-    opacity: 0.9;
+    opacity: 0.95;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3); /* Делаем текст читаемым */
 }
 
 /* ===== НАВИГАЦИЯ ===== */
@@ -137,7 +177,7 @@ body {
     position: fixed;
     width: 100%;
     top: 0;
-    z-index: 1000;
+    z-index: 1000; /* ВАЖНО: самый высокий z-index */
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
@@ -197,7 +237,7 @@ body {
     visibility: hidden;
     transform: translateY(10px);
     transition: all 0.3s ease;
-    z-index: 100;
+    z-index: 1001; /* ВАЖНО: выше навигации */
 }
 
 .dropdown:hover .dropdown-content {
@@ -599,6 +639,8 @@ textarea.form-control {
     background: linear-gradient(135deg, #1a2980, #26d0ce);
     color: white;
     padding: 60px 0 30px;
+    position: relative;
+    z-index: 2;
 }
 
 .footer-content {
