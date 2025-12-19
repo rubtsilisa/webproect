@@ -1,13 +1,13 @@
 /* 
  * JAVASCRIPT ДЛЯ ПРОЕКТА "DRUPAL-CODER"
- * Полная версия со всеми функциями
+ * Полная версия со всеми функциями + Форма через FORMCARRY
  * 
  * Включает:
  * 1. Навигация и меню
  * 2. Слайдер кейсов
  * 3. Слайдер отзывов
  * 4. FAQ аккордеон
- * 5. Формы с AJAX отправкой НА РЕАЛЬНЫЙ SERVER
+ * 5. Формы с AJAX отправкой НА FORMCARRY (ID: 4lv37IeJGYm)
  * 6. Модальное окно с RAF анимацией
  * 7. Анимации скролла
  * 8. LocalStorage для форм
@@ -15,12 +15,13 @@
  */
 
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ =====
-const API_URL = 'https://formspree.io/f/4lv37IeJGYm';
+const FORMCARRY_FORM_ID = '4lv37IeJGYm'; // ВАШ ID ФОРМЫ
+const FORMCARRY_URL = `https://formcarry.com/s/${FORMCARRY_FORM_ID}`;
 
 // ===== ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Drupal-coder проект загружен');
-    console.log('📧 Отправка формы на Formspree ID: xykgkkpa');
+    console.log('📧 Отправка формы на Formcarry ID:', FORMCARRY_FORM_ID);
     
     // Инициализация всех компонентов
     initNavigation();
@@ -432,7 +433,7 @@ function initForms() {
     });
 }
 
-// ===== ОТПРАВКА ФОРМЫ (РЕАЛЬНАЯ ОТПРАВКА ЧЕРЕЗ FETCH) =====
+// ===== ОТПРАВКА ФОРМЫ (РЕАЛЬНАЯ ОТПРАВКА НА FORMCARRY) =====
 function submitForm(form, formType) {
     const submitBtn = form.querySelector('.submit-btn');
     const submitText = form.querySelector('#submitText');
@@ -450,31 +451,34 @@ function submitForm(form, formType) {
     if (submitText) submitText.textContent = 'Отправка...';
     if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
     
-    // Собираем данные формы
+    console.log('📨 Отправка данных формы на Formcarry...');
+    
+    // Создаем FormData для отправки на Formcarry
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
     
-    console.log('📨 Отправка данных формы на Formspree:', data);
-    console.log('🌐 URL для отправки:', API_URL);
+    // Добавляем тему письма
+    formData.append('_subject', 'Новая заявка с сайта Drupal-coder');
     
-    // РЕАЛЬНАЯ ОТПРАВКА ЧЕРЕЗ FORMCARRY
-const formData = new FormData(form);
-formData.append('_subject', 'Новая заявка с сайта Drupal-coder');
-
-fetch(API_URL, {
-    method: 'POST',
-    body: formData
-})
-    .then(response => response.json())
-.then(data => {
-    console.log('✅ Ответ от Formcarry:', data);
-    
-    if (data.code === 200 || data.status === 'success') {
-        handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
-    } else {
-        throw new Error(data.message || 'Ошибка при отправке формы');
-    }
-})
+    // Отправляем данные на Formcarry
+    fetch(FORMCARRY_URL, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ Ответ от Formcarry:', data);
+        
+        if (data.code === 200 || data.status === 'success') {
+            handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
+        } else {
+            throw new Error(data.message || 'Ошибка при отправке формы');
+        }
+    })
     .catch(error => {
         console.error('❌ Ошибка при отправке формы:', error);
         handleFormError(error, submitBtn, submitText, loadingSpinner, messageDiv);
@@ -868,9 +872,6 @@ function initTestData() {
 // ===== ОБРАБОТКА ОШИБОК =====
 window.addEventListener('error', function(e) {
     console.error('Произошла ошибка:', e.error);
-    
-    // В реальном проекте можно отправить ошибку на сервер для логирования
-    // fetch('/api/log-error', { method: 'POST', body: JSON.stringify(e.error) });
 });
 
 // Обработка неотловленных промисов
@@ -951,5 +952,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-console.log('✅ Все компоненты инициализированы, Formspree ID: xykgkkpa');
-
+console.log('✅ Все компоненты инициализированы, Formcarry ID: 4lv37IeJGYm');
