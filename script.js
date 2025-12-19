@@ -15,7 +15,7 @@
  */
 
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ =====
-const API_URL = 'https://formspree.io/f/xykgkkpa'; // ВАШ РЕАЛЬНЫЙ ID ФОРМЫ
+const API_URL = 'https://formspree.io/f/4lv37IeJGYm';
 
 // ===== ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -457,33 +457,24 @@ function submitForm(form, formType) {
     console.log('📨 Отправка данных формы на Formspree:', data);
     console.log('🌐 URL для отправки:', API_URL);
     
-    // РЕАЛЬНАЯ ОТПРАВКА ЧЕРЕЗ FETCH
-    fetch(API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            name: data.name || '',
-            phone: data.phone || '',
-            email: data.email || '',
-            service: data.service || '',
-            message: data.message || data.comment || '',
-            plan: data.plan || '',
-            _subject: 'Новая заявка с сайта Drupal-coder'
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(responseData => {
-        console.log('✅ Форма успешно отправлена:', responseData);
+    // РЕАЛЬНАЯ ОТПРАВКА ЧЕРЕЗ FORMCARRY
+const formData = new FormData(form);
+formData.append('_subject', 'Новая заявка с сайта Drupal-coder');
+
+fetch(API_URL, {
+    method: 'POST',
+    body: formData
+})
+    .then(response => response.json())
+.then(data => {
+    console.log('✅ Ответ от Formcarry:', data);
+    
+    if (data.code === 200 || data.status === 'success') {
         handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
-    })
+    } else {
+        throw new Error(data.message || 'Ошибка при отправке формы');
+    }
+})
     .catch(error => {
         console.error('❌ Ошибка при отправке формы:', error);
         handleFormError(error, submitBtn, submitText, loadingSpinner, messageDiv);
@@ -961,3 +952,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ Все компоненты инициализированы, Formspree ID: xykgkkpa');
+
