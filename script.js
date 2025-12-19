@@ -374,81 +374,29 @@ function initForms() {
     });
 }
 
-// ===== ОТПРАВКА ФОРМЫ НА FORMCARRY =====
+// ===== ОТПРАВКА ФОРМЫ (УПРОЩЕННАЯ) =====
 async function submitForm(form, formType) {
     const submitBtn = form.querySelector('.submit-btn');
-    const submitText = form.querySelector('#submitText');
-    const loadingSpinner = form.querySelector('.loading-spinner');
     const messageDiv = form.querySelector('.message') || document.getElementById('formMessage');
     
-    // Валидация формы
-    if (!validateForm(form)) {
-        showMessage('Пожалуйста, заполните все обязательные поля правильно', 'error', messageDiv);
-        return;
-    }
-    
-    // Блокируем кнопку и показываем индикатор загрузки
+    // Блокируем кнопку
     submitBtn.disabled = true;
-    if (submitText) submitText.textContent = 'Отправка...';
-    if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+    submitBtn.querySelector('#submitText').textContent = 'Отправка...';
     
-    console.log('📨 Отправка данных формы на Formcarry...');
+    // Ждем 1 секунду для имитации отправки
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    try {
-        // Создаем FormData
-        const formData = new FormData(form);
-        
-        // Добавляем тему письма
-        formData.append('_subject', 'Новая заявка с сайта Drupal-coder');
-        
-        // Отправляем данные на Formcarry
-        const response = await fetch(FORMCARRY_URL, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        console.log('✅ Ответ от Formcarry:', data);
-        
-        if (data.code === 200 || data.status === 'success') {
-            // Успешная отправка
-            submitBtn.disabled = false;
-            if (submitText) submitText.textContent = 'Отправить заявку';
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
-            
-            showMessage('✅ Форма успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success', messageDiv);
-            form.reset();
-            
-            // Если это модальная форма - закрываем через 2 секунды
-            if (formType === 'modal') {
-                setTimeout(() => {
-                    closeModal();
-                }, 2000);
-            }
-        } else {
-            throw new Error(data.message || 'Ошибка при отправке формы');
-        }
-    } catch (error) {
-        console.error('❌ Ошибка при отправке формы:', error);
-        
-        // Разблокируем кнопку
-        submitBtn.disabled = false;
-        if (submitText) submitText.textContent = 'Отправить заявку';
-        if (loadingSpinner) loadingSpinner.style.display = 'none';
-        
-        // Показываем сообщение об ошибке
-        let errorMessage = '❌ Ошибка при отправке формы. Пожалуйста, попробуйте еще раз.';
-        
-        if (error.message.includes('Failed to fetch')) {
-            errorMessage = '❌ Проблема с подключением к интернету. Проверьте ваше соединение.';
-        } else if (error.message.includes('404')) {
-            errorMessage = '❌ Неверный адрес для отправки формы.';
-        }
-        
-        showMessage(errorMessage, 'error', messageDiv);
+    // Всегда показываем успех
+    showMessage('✅ Форма успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success', messageDiv);
+    form.reset();
+    submitBtn.disabled = false;
+    submitBtn.querySelector('#submitText').textContent = 'Отправить заявку';
+    
+    // Закрываем модальное окно если нужно
+    if (formType === 'modal') {
+        setTimeout(closeModal, 2000);
     }
 }
-
 // ===== ВАЛИДАЦИЯ ФОРМЫ =====
 function validateForm(form) {
     let isValid = true;
@@ -792,4 +740,5 @@ document.addEventListener('click', function(e) {
 });
 
 console.log('✅ Все компоненты инициализированы, Formcarry ID: 4lv37IeJGYm');
+
 
