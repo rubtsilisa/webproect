@@ -1,32 +1,39 @@
 /* 
  * JAVASCRIPT ДЛЯ ПРОЕКТА "DRUPAL-CODER"
- * Mobile-first адаптивный сайт с интерактивными элементами
+ * Полная версия со всеми функциями
  * 
- * Функциональность:
- * 1. Адаптивное меню с анимацией
- * 2. AJAX отправка форм
- * 3. Модальное окно с requestAnimationFrame анимацией
- * 4. LocalStorage для сохранения данных
- * 5. History API для навигации
- * 6. Валидация и обработка ошибок
+ * Включает:
+ * 1. Навигация и меню
+ * 2. Слайдер кейсов
+ * 3. Слайдер отзывов
+ * 4. FAQ аккордеон
+ * 5. Формы с AJAX отправкой
+ * 6. Модальное окно с RAF анимацией
+ * 7. Анимации скролла
+ * 8. LocalStorage для форм
+ * 9. История через History API
  */
 
 // ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ =====
-const API_URL = 'https://formspree.io/f/YOUR_FORM_ID'; // Заменить на свой Formspree ID
+const API_URL = 'https://formspree.io/f/YOUR_FORM_ID'; // Замени на свой ID с Formspree
 
-// ===== ОСНОВНАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ =====
+// ===== ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Drupal-coder проект загружен');
     
     // Инициализация всех компонентов
     initNavigation();
+    initVideo();
+    initSliders();
+    initAccordion();
     initForms();
     initModal();
     initScrollEffects();
+    initScrollToTop();
     loadFromLocalStorage();
     
-    // Тестовая анимация для демонстрации
-    initTestAnimation();
+    // Тестовые данные для слайдеров
+    initTestData();
 });
 
 // ===== НАВИГАЦИЯ И МЕНЮ =====
@@ -34,8 +41,7 @@ function initNavigation() {
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileMenu = document.getElementById('mobileMenu');
     const mainNav = document.getElementById('mainNav');
-    const dropdownToggleMobile = document.querySelector('.dropdown-toggle-mobile');
-    const mobileDropdown = document.querySelector('.mobile-dropdown');
+    const mobileDropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
     
     let lastScrollTop = 0;
     let isMobileMenuOpen = false;
@@ -49,43 +55,47 @@ function initNavigation() {
             
             // Блокируем скролл тела при открытом меню
             document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
-            
-            // Добавляем/убираем класс для анимации
-            if (isMobileMenuOpen) {
-                document.body.classList.add('menu-open');
-            } else {
-                document.body.classList.remove('menu-open');
-            }
+            document.body.classList.toggle('menu-open', isMobileMenuOpen);
         });
         
         // Закрытие меню при клике на ссылку
-        const mobileLinks = mobileMenu.querySelectorAll('a');
+        const mobileLinks = mobileMenu.querySelectorAll('a:not(.mobile-dropdown-toggle)');
         mobileLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                // Если это не выпадающее меню, закрываем
-                if (!e.target.classList.contains('dropdown-toggle-mobile')) {
-                    closeMobileMenu();
-                }
+            link.addEventListener('click', () => {
+                closeMobileMenu();
             });
         });
         
         // Выпадающее меню в мобильной версии
-        if (dropdownToggleMobile && mobileDropdown) {
-            dropdownToggleMobile.addEventListener('click', function(e) {
+        mobileDropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
                 e.preventDefault();
-                mobileDropdown.classList.toggle('active');
-                this.classList.toggle('active');
+                const dropdownContent = this.nextElementSibling;
+                if (dropdownContent && dropdownContent.classList.contains('mobile-dropdown-content')) {
+                    dropdownContent.classList.toggle('active');
+                    this.classList.toggle('active');
+                    
+                    // Анимация иконки
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = dropdownContent.classList.contains('active') 
+                            ? 'rotate(180deg)' 
+                            : 'rotate(0deg)';
+                    }
+                }
             });
-        }
+        });
     }
     
     // Функция закрытия мобильного меню
     function closeMobileMenu() {
-        mobileMenuBtn.classList.remove('active');
-        mobileMenu.classList.remove('active');
-        document.body.style.overflow = '';
-        document.body.classList.remove('menu-open');
-        isMobileMenuOpen = false;
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+            document.body.classList.remove('menu-open');
+            isMobileMenuOpen = false;
+        }
     }
     
     // Скрытие/показа навигации при скролле
@@ -99,9 +109,11 @@ function initNavigation() {
             mainNav.classList.remove('hidden');
         }
         
-        // Показываем/скрываем кнопку "наверх" если нужно
-        if (scrollTop > 500) {
-            // Можно добавить кнопку "наверх"
+        // Добавляем класс при скролле
+        if (scrollTop > 50) {
+            mainNav.classList.add('scrolled');
+        } else {
+            mainNav.classList.remove('scrolled');
         }
         
         lastScrollTop = scrollTop;
@@ -115,12 +127,276 @@ function initNavigation() {
             closeMobileMenu();
         }
     });
+    
+    // Закрытие меню при нажатии Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isMobileMenuOpen) {
+            closeMobileMenu();
+        }
+    });
+}
+
+// ===== ВИДЕО ФОН =====
+function initVideo() {
+    const video = document.getElementById('headerVideo');
+    
+    if (!video) return;
+    
+    // Проверяем загрузку видео
+    video.addEventListener('loadeddata', function() {
+        console.log('✅ Видео загружено и готово к воспроизведению');
+    });
+    
+    // Если видео не загрузилось
+    video.addEventListener('error', function() {
+        console.log('❌ Видео не загрузилось. Показываем запасной фон');
+        video.style.display = 'none';
+    });
+    
+    // Для мобильных - автоплей может не работать
+    const playPromise = video.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log('Автовоспроизведение заблокировано:', error);
+            // Можно добавить кнопку для запуска видео
+        });
+    }
+}
+
+// ===== СЛАЙДЕР КЕЙСОВ =====
+function initSliders() {
+    initCasesSlider();
+    initReviewsSlider();
+}
+
+function initCasesSlider() {
+    const sliderContainer = document.getElementById('sliderContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const sliderDots = document.getElementById('sliderDots');
+    
+    if (!sliderContainer) return;
+    
+    // Данные для слайдов (в реальном проекте могут приходить с сервера)
+    const slidesData = [
+        {
+            title: 'Ускорение интернет-магазина на Drupal',
+            description: 'Оптимизировали производительность интернет-магазина, увеличив скорость загрузки страниц в 3 раза. Улучшили UX и увеличили конверсию на 25%.',
+            stats: [
+                { value: '3x', label: 'Ускорение загрузки' },
+                { value: '25%', label: 'Рост конверсии' },
+                { value: '30%', label: 'Снижение отказов' }
+            ]
+        },
+        {
+            title: 'Миграция с Joomla на Drupal',
+            description: 'Провели полную миграцию корпоративного сайта с Joomla на Drupal 9. Сохранили весь контент и улучшили структуру сайта.',
+            stats: [
+                { value: '100%', label: 'Контент сохранен' },
+                { value: 'Drupal 9', label: 'Новая версия' },
+                { value: '40%', label: 'Рост производительности' }
+            ]
+        },
+        {
+            title: 'Разработка кастомного модуля CRM',
+            description: 'Разработали и внедрили кастомный модуль интеграции с CRM системой. Автоматизировали процессы и сократили время обработки заявок.',
+            stats: [
+                { value: '70%', label: 'Автоматизация' },
+                { value: '2 часа', label: 'Вместо 8 часов' },
+                { value: '300+', label: 'Ежедневных заявок' }
+            ]
+        }
+    ];
+    
+    let currentSlide = 0;
+    
+    // Создаем слайды
+    slidesData.forEach((slideData, index) => {
+        // Создаем элемент слайда
+        const slide = document.createElement('div');
+        slide.className = 'slide';
+        slide.dataset.index = index;
+        
+        // Статистика
+        let statsHTML = '';
+        if (slideData.stats && slideData.stats.length > 0) {
+            statsHTML = '<div class="slide-stats">';
+            slideData.stats.forEach(stat => {
+                statsHTML += `
+                    <div class="slide-stat">
+                        <div class="slide-stat-value">${stat.value}</div>
+                        <div class="slide-stat-label">${stat.label}</div>
+                    </div>
+                `;
+            });
+            statsHTML += '</div>';
+        }
+        
+        slide.innerHTML = `
+            <h3 class="slide-title">${slideData.title}</h3>
+            <p class="slide-description">${slideData.description}</p>
+            ${statsHTML}
+        `;
+        
+        sliderContainer.appendChild(slide);
+        
+        // Создаем точку для слайда
+        const dot = document.createElement('button');
+        dot.className = `slider-dot ${index === 0 ? 'active' : ''}`;
+        dot.dataset.index = index;
+        dot.setAttribute('aria-label', `Перейти к слайду ${index + 1}`);
+        dot.addEventListener('click', () => goToSlide(index));
+        sliderDots.appendChild(dot);
+    });
+    
+    // Функция перехода к слайду
+    function goToSlide(index) {
+        if (index < 0) index = slidesData.length - 1;
+        if (index >= slidesData.length) index = 0;
+        
+        currentSlide = index;
+        sliderContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+        
+        // Обновляем активные точки
+        document.querySelectorAll('.slider-dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentSlide);
+        });
+    }
+    
+    // Обработчики кнопок
+    if (prevBtn) prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+    
+    // Автопрокрутка слайдера (опционально)
+    let slideInterval = setInterval(() => goToSlide(currentSlide + 1), 5000);
+    
+    // Останавливаем автопрокрутку при наведении
+    sliderContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+    sliderContainer.addEventListener('mouseleave', () => {
+        slideInterval = setInterval(() => goToSlide(currentSlide + 1), 5000);
+    });
+}
+
+// ===== СЛАЙДЕР ОТЗЫВОВ =====
+function initReviewsSlider() {
+    const reviewsContainer = document.getElementById('reviewsContainer');
+    const prevReviewBtn = document.getElementById('prevReviewBtn');
+    const nextReviewBtn = document.getElementById('nextReviewBtn');
+    const currentReviewEl = document.getElementById('currentReview');
+    const totalReviewsEl = document.getElementById('totalReviews');
+    
+    if (!reviewsContainer) return;
+    
+    // Данные для отзывов
+    const reviewsData = [
+        {
+            content: 'Долгие поиски единственного и неповторимого мастера на многостраничный сайт www.cielparfum.com, который был собран крайне некомпетентным программистом и раз в месяц стабильно грозился погибнуть, привели меня на сайт и в итоге, к ребятам из Drupal-coder.',
+            author: 'Светлана Юшкова',
+            position: 'Руководитель отдела веб-проектов группы компаний «СиЭль парфюм»'
+        },
+        {
+            content: 'Ребята показали, что эта CMS - мощная и грамотная система управления. Надеюсь, что наше сотрудничество затянется надолго. Спасибо!',
+            author: 'Алексей Петров',
+            position: 'Директор IT-компании "Веб-Решения"'
+        },
+        {
+            content: 'Качественная работа, быстрое решение проблем. Рекомендую как надежного партнера для поддержки Drupal-сайтов.',
+            author: 'Марина Сидорова',
+            position: 'Владелец интернет-магазина'
+        }
+    ];
+    
+    let currentReview = 0;
+    
+    // Создаем слайды с отзывами
+    reviewsData.forEach((review, index) => {
+        const reviewSlide = document.createElement('div');
+        reviewSlide.className = 'review-slide';
+        reviewSlide.dataset.index = index;
+        
+        // Создаем инициалы из имени
+        const initials = review.author.split(' ').map(n => n[0]).join('');
+        
+        reviewSlide.innerHTML = `
+            <div class="review-content">${review.content}</div>
+            <div class="review-author">
+                <div class="author-avatar">${initials}</div>
+                <div class="author-info">
+                    <h4>${review.author}</h4>
+                    <p>${review.position}</p>
+                </div>
+            </div>
+        `;
+        
+        reviewsContainer.appendChild(reviewSlide);
+    });
+    
+    // Устанавливаем общее количество отзывов
+    if (totalReviewsEl) {
+        totalReviewsEl.textContent = reviewsData.length;
+    }
+    
+    // Функция перехода к отзыву
+    function goToReview(index) {
+        if (index < 0) index = reviewsData.length - 1;
+        if (index >= reviewsData.length) index = 0;
+        
+        currentReview = index;
+        reviewsContainer.style.transform = `translateX(-${currentReview * 100}%)`;
+        
+        // Обновляем счетчик
+        if (currentReviewEl) {
+            currentReviewEl.textContent = currentReview + 1;
+        }
+    }
+    
+    // Обработчики кнопок
+    if (prevReviewBtn) prevReviewBtn.addEventListener('click', () => goToReview(currentReview - 1));
+    if (nextReviewBtn) nextReviewBtn.addEventListener('click', () => goToReview(currentReview + 1));
+}
+
+// ===== FAQ АККОРДЕОН =====
+function initAccordion() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        if (question) {
+            question.addEventListener('click', function() {
+                // Закрываем все другие открытые вопросы
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('active')) {
+                        otherItem.classList.remove('active');
+                        const otherAnswer = otherItem.querySelector('.faq-answer');
+                        if (otherAnswer) {
+                            otherAnswer.style.maxHeight = null;
+                        }
+                    }
+                });
+                
+                // Переключаем текущий вопрос
+                item.classList.toggle('active');
+                const answer = item.querySelector('.faq-answer');
+                
+                if (answer) {
+                    if (item.classList.contains('active')) {
+                        answer.style.maxHeight = answer.scrollHeight + 'px';
+                    } else {
+                        answer.style.maxHeight = null;
+                    }
+                }
+            });
+        }
+    });
 }
 
 // ===== ФОРМЫ ОБРАТНОЙ СВЯЗИ =====
 function initForms() {
     const mainForm = document.getElementById('mainContactForm');
     const modalForm = document.getElementById('modalContactForm');
+    const selectPlanButtons = document.querySelectorAll('.select-plan');
     
     // Основная форма
     if (mainForm) {
@@ -129,16 +405,11 @@ function initForms() {
             submitForm(this, 'main');
         });
         
-        // Автосохранение в LocalStorage при изменении
-        const inputs = mainForm.querySelectorAll('input, textarea');
+        // Автосохранение в LocalStorage
+        const inputs = mainForm.querySelectorAll('input, textarea, select');
         inputs.forEach(input => {
             input.addEventListener('input', function() {
-                saveToLocalStorage('mainForm', {
-                    name: document.getElementById('name').value,
-                    phone: document.getElementById('phone').value,
-                    email: document.getElementById('email').value,
-                    comment: document.getElementById('comment').value
-                });
+                saveFormToLocalStorage('mainForm', mainForm);
             });
         });
     }
@@ -150,9 +421,17 @@ function initForms() {
             submitForm(this, 'modal');
         });
     }
+    
+    // Кнопки выбора тарифов
+    selectPlanButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const plan = this.dataset.plan;
+            openModalWithPlan(plan);
+        });
+    });
 }
 
-// ===== ОТПРАВКА ФОРМЫ (AJAX) =====
+// ===== ОТПРАВКА ФОРМЫ =====
 function submitForm(form, formType) {
     const submitBtn = form.querySelector('.submit-btn');
     const submitText = form.querySelector('#submitText');
@@ -174,40 +453,43 @@ function submitForm(form, formType) {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
     
-    // Для демонстрации - имитация отправки
-    // В реальном проекте раскомментировать fetch код ниже
-    
     console.log('📨 Отправка данных формы:', data);
     
-    // Имитация AJAX-запроса (2 секунды)
-    setTimeout(() => {
-        // Успешная отправка
+    // В РЕАЛЬНОМ ПРОЕКТЕ РАСКОММЕНТИРУЙТЕ ЭТОТ КОД:
+    /*
+    fetch(API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Ошибка сети: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
         handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
+    })
+    .catch(error => {
+        console.error('❌ Ошибка при отправке формы:', error);
+        handleFormError(error, submitBtn, submitText, loadingSpinner, messageDiv);
+    });
+    */
+    
+    // Имитация отправки (удалите в реальном проекте)
+    setTimeout(() => {
+        // 90% успешной отправки, 10% ошибки для демонстрации
+        const isSuccess = Math.random() > 0.1;
         
-        // В РЕАЛЬНОМ ПРОЕКТЕ ИСПОЛЬЗОВАТЬ ЭТОТ КОД:
-        /*
-        fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Ошибка сети: ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
+        if (isSuccess) {
             handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner, messageDiv);
-        })
-        .catch(error => {
-            handleFormError(error, submitBtn, submitText, loadingSpinner, messageDiv);
-        });
-        */
-        
+        } else {
+            handleFormError(new Error('Сервер временно недоступен'), submitBtn, submitText, loadingSpinner, messageDiv);
+        }
     }, 2000);
 }
 
@@ -217,11 +499,13 @@ function validateForm(form) {
     const requiredFields = form.querySelectorAll('[required]');
     
     requiredFields.forEach(field => {
+        // Убираем предыдущие ошибки
         field.classList.remove('error');
         
         if (!field.value.trim()) {
             field.classList.add('error');
             isValid = false;
+            showFieldError(field, 'Это поле обязательно для заполнения');
         }
         
         // Валидация email
@@ -230,11 +514,36 @@ function validateForm(form) {
             if (!emailRegex.test(field.value)) {
                 field.classList.add('error');
                 isValid = false;
+                showFieldError(field, 'Введите корректный email адрес');
+            }
+        }
+        
+        // Валидация телефона
+        if (field.type === 'tel' && field.value) {
+            const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+            if (!phoneRegex.test(field.value) || field.value.replace(/\D/g, '').length < 10) {
+                field.classList.add('error');
+                isValid = false;
+                showFieldError(field, 'Введите корректный номер телефона');
             }
         }
     });
     
     return isValid;
+}
+
+function showFieldError(field, message) {
+    // Убираем предыдущее сообщение об ошибке
+    let errorElement = field.parentNode.querySelector('.field-error');
+    if (!errorElement) {
+        errorElement = document.createElement('div');
+        errorElement.className = 'field-error';
+        field.parentNode.appendChild(errorElement);
+    }
+    errorElement.textContent = message;
+    errorElement.style.color = '#ff6b6b';
+    errorElement.style.fontSize = '0.9rem';
+    errorElement.style.marginTop = '5px';
 }
 
 // ===== ОБРАБОТКА УСПЕШНОЙ ОТПРАВКИ =====
@@ -252,14 +561,14 @@ function handleFormSuccess(form, formType, submitBtn, submitText, loadingSpinner
     
     // Очищаем LocalStorage для этой формы
     if (formType === 'main') {
-        localStorage.removeItem('mainForm');
+        localStorage.removeItem('mainFormData');
     }
     
     // Если это модальная форма - закрываем модальное окно
     if (formType === 'modal') {
         setTimeout(() => {
             closeModal();
-        }, 1500);
+        }, 2000);
     }
 }
 
@@ -273,7 +582,15 @@ function handleFormError(error, submitBtn, submitText, loadingSpinner, messageDi
     if (loadingSpinner) loadingSpinner.style.display = 'none';
     
     // Показываем сообщение об ошибке
-    showMessage('❌ Ошибка при отправке формы. Пожалуйста, попробуйте еще раз или свяжитесь с нами по телефону.', 'error', messageDiv);
+    let errorMessage = '❌ Ошибка при отправке формы. Пожалуйста, попробуйте еще раз.';
+    
+    if (error.message.includes('Сервер временно недоступен')) {
+        errorMessage = '❌ Сервер временно недоступен. Пожалуйста, попробуйте позже или свяжитесь с нами по телефону.';
+    } else if (error.message.includes('network')) {
+        errorMessage = '❌ Проблема с подключением к интернету. Проверьте ваше соединение.';
+    }
+    
+    showMessage(errorMessage, 'error', messageDiv);
 }
 
 // ===== ПОКАЗ СООБЩЕНИЙ =====
@@ -292,9 +609,11 @@ function showMessage(text, type, container) {
     }
 }
 
-// ===== LOCALSTORAGE ФУНКЦИИ =====
-function saveToLocalStorage(key, data) {
+// ===== LOCALSTORAGE =====
+function saveFormToLocalStorage(key, form) {
     try {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
         localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
         console.error('Ошибка сохранения в LocalStorage:', e);
@@ -303,15 +622,20 @@ function saveToLocalStorage(key, data) {
 
 function loadFromLocalStorage() {
     try {
-        const savedData = localStorage.getItem('mainForm');
+        const savedData = localStorage.getItem('mainFormData');
         if (savedData) {
             const data = JSON.parse(savedData);
             
             // Заполняем поля основной формы
-            if (document.getElementById('name')) document.getElementById('name').value = data.name || '';
-            if (document.getElementById('phone')) document.getElementById('phone').value = data.phone || '';
-            if (document.getElementById('email')) document.getElementById('email').value = data.email || '';
-            if (document.getElementById('comment')) document.getElementById('comment').value = data.comment || '';
+            const form = document.getElementById('mainContactForm');
+            if (form) {
+                Object.keys(data).forEach(key => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field && data[key]) {
+                        field.value = data[key];
+                    }
+                });
+            }
             
             console.log('📂 Данные формы загружены из LocalStorage');
         }
@@ -353,19 +677,33 @@ function initModal() {
     
     // Обработка кнопки "Назад" в браузере
     window.addEventListener('popstate', function(e) {
-        if (window.location.hash === '#contact-modal' || (e.state && e.state.modalOpen)) {
-            openModal();
-        } else {
+        const modalOverlay = document.getElementById('modalOverlay');
+        if (modalOverlay && modalOverlay.style.display === 'flex') {
             closeModal();
         }
     });
     
     // Закрытие по Escape
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
-            closeModal();
+        if (e.key === 'Escape') {
+            const modalOverlay = document.getElementById('modalOverlay');
+            if (modalOverlay && modalOverlay.style.display === 'flex') {
+                closeModal();
+            }
         }
     });
+}
+
+function openModalWithPlan(planName) {
+    openModal();
+    
+    // Устанавливаем выбранный план в форму модального окна
+    setTimeout(() => {
+        const modalMessage = document.getElementById('modalMessage');
+        if (modalMessage) {
+            modalMessage.value = `Интересует тариф "${planName}". Пожалуйста, свяжитесь со мной для обсуждения деталей.`;
+        }
+    }, 300);
 }
 
 // ===== АНИМАЦИЯ МОДАЛЬНОГО ОКНА (requestAnimationFrame) =====
@@ -380,7 +718,7 @@ function openModal() {
     
     // Сбрасываем стили анимации
     modal.style.opacity = '0';
-    modal.style.transform = 'scale(0.9) translateY(20px)';
+    modal.style.transform = 'scale(0.9) translateY(30px)';
     
     // Анимация через requestAnimationFrame
     let startTime = null;
@@ -402,7 +740,7 @@ function openModal() {
         
         // Анимируем
         modal.style.opacity = percentage;
-        modal.style.transform = `scale(${0.9 + easedPercentage * 0.1}) translateY(${20 - easedPercentage * 20}px)`;
+        modal.style.transform = `scale(${0.9 + easedPercentage * 0.1}) translateY(${30 - easedPercentage * 30}px)`;
         
         if (progress < duration) {
             requestAnimationFrame(animateModal);
@@ -437,7 +775,7 @@ function closeModal() {
         const easedPercentage = easeInBack(percentage);
         
         modal.style.opacity = 1 - percentage;
-        modal.style.transform = `scale(${1 - easedPercentage * 0.1}) translateY(${easedPercentage * 20}px)`;
+        modal.style.transform = `scale(${1 - easedPercentage * 0.1}) translateY(${easedPercentage * 30}px)`;
         
         if (progress < duration) {
             requestAnimationFrame(animateClose);
@@ -458,16 +796,17 @@ function closeModal() {
     requestAnimationFrame(animateClose);
 }
 
-// ===== SCROLL ЭФФЕКТЫ =====
+// ===== АНИМАЦИИ ПРИ СКРОЛЛЕ =====
 function initScrollEffects() {
-    // Параллакс-эффект для шапки
+    // Параллакс-эффект для видео-фона
     window.addEventListener('scroll', function() {
         const scrolled = window.pageYOffset;
         const header = document.getElementById('header');
         
-        if (header) {
+        if (header && scrolled < window.innerHeight) {
             const speed = 0.5;
-            header.style.transform = `translateY(${scrolled * speed}px)`;
+            const yPos = -(scrolled * speed);
+            header.style.transform = `translateY(${yPos}px)`;
         }
     });
     
@@ -480,130 +819,65 @@ function initScrollEffects() {
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
+                entry.target.classList.add('fade-in-up');
             }
         });
     }, observerOptions);
     
     // Наблюдаем за карточками
-    document.querySelectorAll('.service-card, .pricing-card').forEach(card => {
+    document.querySelectorAll('.service-card, .advantage-card, .pricing-card, .team-member').forEach(card => {
         observer.observe(card);
     });
 }
 
-// ===== ТЕСТОВАЯ АНИМАЦИЯ ДЛЯ ДЕМОНСТРАЦИИ =====
-function initTestAnimation() {
-    // Создаем тестовый элемент для демонстрации requestAnimationFrame
-    const testElement = document.createElement('div');
-    testElement.id = 'testAnimation';
-    testElement.innerHTML = `
-        <style>
-            #testAnimation {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 60px;
-                height: 60px;
-                background: linear-gradient(135deg, #ff6b6b, #ff5252);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: bold;
-                font-size: 12px;
-                cursor: pointer;
-                z-index: 1000;
-                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-                user-select: none;
-                text-align: center;
-                padding: 5px;
-            }
-            
-            #testAnimation:hover {
-                transform: scale(1.1);
-            }
-            
-            .animation-active {
-                animation: pulse 1s infinite;
-            }
-            
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-            }
-        </style>
-        RAF<br>TEST
-    `;
+// ===== КНОПКА "НАВЕРХ" =====
+function initScrollToTop() {
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
     
-    document.body.appendChild(testElement);
+    if (!scrollTopBtn) return;
     
-    // Добавляем анимацию по клику
-    testElement.addEventListener('click', function() {
-        testElement.classList.add('animation-active');
-        
-        // Запускаем кастомную анимацию через requestAnimationFrame
-        animateTestElement(testElement);
-        
-        // Убираем пульсацию через 2 секунды
-        setTimeout(() => {
-            testElement.classList.remove('animation-active');
-        }, 2000);
+    // Показываем/скрываем кнопку при скролле
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            scrollTopBtn.classList.add('visible');
+        } else {
+            scrollTopBtn.classList.remove('visible');
+        }
     });
     
-    function animateTestElement(element) {
-        let startTime = null;
-        const duration = 2000; // 2 секунды
-        const startColor = '#ff6b6b';
-        const endColor = '#26d0ce';
-        
-        function animate(timestamp) {
-            if (!startTime) startTime = timestamp;
-            const progress = timestamp - startTime;
-            const percentage = Math.min(progress / duration, 1);
-            
-            // Плавное изменение цвета
-            const r1 = parseInt(startColor.slice(1, 3), 16);
-            const g1 = parseInt(startColor.slice(3, 5), 16);
-            const b1 = parseInt(startColor.slice(5, 7), 16);
-            
-            const r2 = parseInt(endColor.slice(1, 3), 16);
-            const g2 = parseInt(endColor.slice(3, 5), 16);
-            const b2 = parseInt(endColor.slice(5, 7), 16);
-            
-            const r = Math.round(r1 + (r2 - r1) * percentage);
-            const g = Math.round(g1 + (g2 - g1) * percentage);
-            const b = Math.round(b1 + (b2 - b1) * percentage);
-            
-            element.style.background = `rgb(${r}, ${g}, ${b})`;
-            
-            // Круговое движение
-            const angle = percentage * Math.PI * 2;
-            const radius = 50;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            
-            element.style.transform = `translate(${x}px, ${y}px) rotate(${percentage * 360}deg)`;
-            
-            if (progress < duration) {
-                requestAnimationFrame(animate);
-            } else {
-                // Возвращаем в исходное положение
-                element.style.transform = '';
-                element.style.background = '';
-            }
+    // Плавный скролл наверх при клике
+    scrollTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+// ===== ТЕСТОВЫЕ ДАННЫЕ И ИНИЦИАЛИЗАЦИЯ =====
+function initTestData() {
+    // Для демонстрации - добавляем стили для ошибок полей
+    const style = document.createElement('style');
+    style.textContent = `
+        .form-control.error {
+            border-color: #ff6b6b !important;
+            background-color: #fff8f8 !important;
         }
         
-        requestAnimationFrame(animate);
-    }
+        .field-error {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // ===== ОБРАБОТКА ОШИБОК =====
 window.addEventListener('error', function(e) {
     console.error('Произошла ошибка:', e.error);
     
-    // Можно отправить ошибку на сервер для логирования
+    // В реальном проекте можно отправить ошибку на сервер для логирования
     // fetch('/api/log-error', { method: 'POST', body: JSON.stringify(e.error) });
 });
 
@@ -617,15 +891,31 @@ window.addEventListener('unhandledrejection', function(e) {
 // Плавный скролл к якорям
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        
+        if (href === '#' || href === '#contact-modal') return;
+        
         e.preventDefault();
         
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
+        const targetId = href.substring(1);
+        const targetElement = document.getElementById(targetId);
         
-        const targetElement = document.querySelector(targetId);
         if (targetElement) {
+            // Закрываем мобильное меню если открыто
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenuBtn && mobileMenu && mobileMenu.classList.contains('active')) {
+                mobileMenuBtn.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            // Плавный скролл
+            const navHeight = document.querySelector('.nav').offsetHeight;
+            const targetPosition = targetElement.offsetTop - navHeight - 20;
+            
             window.scrollTo({
-                top: targetElement.offsetTop - 80,
+                top: targetPosition,
                 behavior: 'smooth'
             });
         }
@@ -642,24 +932,31 @@ window.addEventListener('scroll', function() {
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.clientHeight;
+        const navHeight = document.querySelector('.nav').offsetHeight;
         
-        if (pageYOffset >= sectionTop - 100) {
+        if (window.pageYOffset >= sectionTop - navHeight - 100) {
             current = section.getAttribute('id');
         }
     });
     
     navLinks.forEach(link => {
         link.classList.remove('active');
-        if (link.getAttribute('href') === `#${current}`) {
+        const href = link.getAttribute('href');
+        if (href && href.substring(1) === current) {
             link.classList.add('active');
         }
     });
 });
 
-// Инициализация года в футере
+// Инициализация года в футере (если нужно)
 document.addEventListener('DOMContentLoaded', function() {
-    const yearSpan = document.getElementById('currentYear');
-    if (yearSpan) {
-        yearSpan.textContent = new Date().getFullYear();
+    const yearElements = document.querySelectorAll('.current-year');
+    if (yearElements.length > 0) {
+        const currentYear = new Date().getFullYear();
+        yearElements.forEach(el => {
+            el.textContent = currentYear;
+        });
     }
 });
+
+console.log('✅ Все компоненты инициализированы');
